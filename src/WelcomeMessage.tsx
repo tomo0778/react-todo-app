@@ -4,6 +4,7 @@ import React from "react";
 // Propsという名前で定義することが一般的です。
 type Props = {
   name: string;
+  uncompletedCount: number; 
 };
 
 // WelcomeMessage という関数コンポーネントの定義

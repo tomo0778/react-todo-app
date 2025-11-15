@@ -1,4 +1,3 @@
-import React from "react";
 import type { Todo } from "./types";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,15 +10,13 @@ import { twMerge } from "tailwind-merge";
 
 type Props = {
   todos: Todo[];
-  updateIsDone: (id: string, value: boolean) => void; 
-  remove: (id: string) => void;// ◀◀ 追加
+  updateIsDone: (id: string, value: boolean) => void;
+  remove: (id: string) => void;
 };
 
 const num2star = (n: number): string => "★".repeat(4 - n);
 
-const TodoList = (props: Props) => {
-  const todos = props.todos;
-
+const TodoList = ({ todos, updateIsDone, remove }: Props) => {
   if (todos.length === 0) {
     return (
       <div className="text-red-500">
@@ -45,14 +42,17 @@ const TodoList = (props: Props) => {
               <FontAwesomeIcon icon={faFaceGrinWide} className="ml-1.5" />
             </div>
           )}
+
           <div className="flex flex-row items-baseline text-slate-700">
             <FontAwesomeIcon icon={faFile} flip="horizontal" className="mr-1" />
+
             <input
               type="checkbox"
               checked={todo.isDone}
-              onChange={(e) => props.updateIsDone(todo.id, e.target.checked)}
+              onChange={(e) => updateIsDone(todo.id, e.target.checked)}
               className="mr-1.5 cursor-pointer"
             />
+
             <div
               className={twMerge(
                 "text-lg font-bold",
@@ -61,19 +61,23 @@ const TodoList = (props: Props) => {
             >
               {todo.name}
             </div>
-            <div className="ml-2">優先度 </div>
+
+            <div className="ml-2">優先度</div>
             <div className="ml-2 text-orange-400">
               {num2star(todo.priority)}
             </div>
 
             <button
-              onClick={() => props.remove(todo.id)}
-              className="ml-auto rounded-md bg-slate-200 px-2 py-1 text-sm font-bold text-white hover:bg-red-500"
+              onClick={() => remove(todo.id)}
+              className={twMerge(
+                "ml-auto rounded-md px-2 py-1 text-sm font-bold",
+                "bg-slate-200 text-slate-700 hover:bg-red-500 hover:text-white"
+              )}
             >
               削除
             </button>
-
           </div>
+
           {todo.deadline && (
             <div className="ml-4 flex items-center text-sm text-slate-500">
               <FontAwesomeIcon

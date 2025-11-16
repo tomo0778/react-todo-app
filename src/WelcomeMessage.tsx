@@ -1,27 +1,34 @@
 import React from "react";
 
-// 引数の型を定義
-// Propsという名前で定義することが一般的です。
 type Props = {
   name: string;
-  uncompletedCount: number; 
+  uncompletedCount: number;
+  totalCount: number;
+  todayCount: number;
+  next7daysCount: number;
 };
 
-// WelcomeMessage という関数コンポーネントの定義
-// 関数コンポーネントはパスカルケースで名前を設定します。
-const WelcomeMessage = (props: Props) => {
-  // いわゆる普通のロジックを記述する
-  const currentTime = new Date();
-  const greeting =
-    currentTime.getHours() < 12 ? "おはようございます" : "こんにちは";
-
-  //【重要!】JSX構文で描いた「JSX要素」を return で返す
+const WelcomeMessage = ({
+  name,
+  uncompletedCount,
+  totalCount,
+  todayCount,
+  next7daysCount,
+}: Props) => {
   return (
-    <div className="text-blue-700">
-      {greeting}、{props.name}さん。
+    <div className="rounded-md border border-slate-300 bg-white p-3 shadow-sm">
+      <div className="text-xl font-bold mb-1">
+        {name} さん、こんにちは！
+      </div>
+
+      <div className="text-slate-700 space-y-1">
+        <div>未完了タスク数: <span className="font-bold">{uncompletedCount}</span></div>
+        <div>全タスク数: <span className="font-bold">{totalCount}</span></div>
+        <div>今日締め切りのタスク数: <span className="font-bold text-red-500">{todayCount}</span></div>
+        <div>今後7日間のタスク数: <span className="font-bold text-orange-500">{next7daysCount}</span></div>
+      </div>
     </div>
   );
 };
 
-// 他のファイルで WelcomeMessage を import できるようにする
 export default WelcomeMessage;

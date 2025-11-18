@@ -4,5 +4,6 @@ export type Todo = {
   isDone: boolean;
   priority: number;
   deadline: Date | null; 
-    subject: string;
+  subject: string;
+  memo?: string;
 };

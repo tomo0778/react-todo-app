@@ -8,68 +8,68 @@ import {
   faFaceGrinWide,
 } from "@fortawesome/free-solid-svg-icons";
 import { twMerge } from "tailwind-merge";
+import { SUBJECT_COLORS } from "./colors";
 
 type Props = {
   todos: Todo[];
   updateIsDone: (id: string, value: boolean) => void;
   remove: (id: string) => void;
-  updateTodo: (updated: Todo) => void; // ← ★追加
+  updateTodo: (updated: Todo) => void;
 };
 
-const num2star = (n: number): string => "★".repeat(4 - n);
+const num2star = (n: number): string => "★".repeat(n);
 
-// -------------------------------
-// 期限に応じた緊急度カラー
-// -------------------------------
+/*残り時間（🔥期限超過 / ⚠️残り時間 / ⏳残り日数）*/
+const renderDeadlineBadge = (deadline: Date | null) => {
+  if (!deadline) return null;
+
+  const now = new Date();
+  const diffMs = deadline.getTime() - now.getTime();
+  const diffHours = diffMs / 1000 / 60 / 60;
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMs < 0) {
+    return (
+      <span className="ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs">
+        🔥 期限超過
+      </span>
+    );
+  }
+
+  if (diffHours < 24) {
+    return (
+      <span className="ml-2 px-2 py-0.5 rounded bg-orange-500 text-white text-xs">
+        ⚠️ 残り {Math.ceil(diffHours)} 時間
+      </span>
+    );
+  }
+
+  return (
+    <span className="ml-2 px-2 py-0.5 rounded bg-blue-500 text-white text-xs">
+      ⏳ 残り {diffDays} 日
+    </span>
+  );
+};
+
+/* 緊急度カラー */
 const getDeadlineColor = (deadline: Date | null): string => {
   if (!deadline) return "";
-
   const now = dayjs();
   const dl = dayjs(deadline);
-
-  if (dl.isBefore(now)) {
-    return "text-red-600 font-bold"; // 期限切れ
-  }
-  if (dl.diff(now, "hour") <= 24) {
-    return "text-orange-500 font-bold"; // 24時間以内
-  }
-  return "text-slate-500"; // 余裕あり
-};
-
-const subjectColorMap: Record<string, string> = {
-  "国語3": "border-blue-600",
-  "社会3": "border-amber-600",
-  "解析1": "border-emerald-600",
-  "解析2": "border-lime-600",
-  "線形代数・微分方程式": "border-indigo-600",
-  "基礎物理3": "border-purple-600",
-  "保健・体育3": "border-yellow-500",
-  "英語5": "border-sky-600",
-  "英語表現3": "border-orange-500",
-  "情報3": "border-violet-600",
-  "プログラミング2": "border-green-600",
-  "プログラミング3": "border-teal-600",
-  "アルゴリズムとデータ構造1": "border-cyan-600",
-  "論理回路2": "border-red-600",
-  "電気電子回路1": "border-orange-700",
-  "知識科学概論": "border-fuchsia-600",
-  "知能情報実験実習1": "border-stone-500",
-  "応用専門概論": "border-slate-600",
-  "応用専門PBL1": "border-emerald-700",
-  "その他": "border-gray-500",
+  if (dl.isBefore(now)) return "text-red-600 font-bold";
+  if (dl.diff(now, "hour") <= 24) return "text-orange-500 font-bold";
+  return "text-slate-500";
 };
 
 const TodoList = (props: Props) => {
   const todos = props.todos;
 
-  // -------------------------
-  // 編集用の state（STEP2）
-  // -------------------------
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editName, setEditName] = React.useState("");
   const [editSubject, setEditSubject] = React.useState("");
   const [editPriority, setEditPriority] = React.useState(3);
   const [editDeadline, setEditDeadline] = React.useState<Date | null>(null);
+  const [editMemo, setEditMemo] = React.useState("");
 
   if (todos.length === 0) {
     return (
@@ -89,11 +89,14 @@ const TodoList = (props: Props) => {
           <div
             key={todo.id}
             className={twMerge(
-              "rounded-md border border-slate-500 bg-white px-3 py-2 drop-shadow-md",
-              "border-l-8",                                // ← 左ボーダー太く
-              subjectColorMap[todo.subject] || "border-gray-400",
+              "rounded-md border bg-white px-3 py-2 drop-shadow-md",
               todo.isDone && "bg-blue-50 opacity-50"
             )}
+            style={{
+              borderLeft: `8px solid ${
+                SUBJECT_COLORS[todo.subject] ?? "#6b7280"
+              }`,
+            }}
           >
             {/* 完了ラベル */}
             {todo.isDone && (
@@ -104,13 +107,9 @@ const TodoList = (props: Props) => {
               </div>
             )}
 
-            {/* ----------------------------------------------------
-                編集モード表示 (STEP3)
-            ----------------------------------------------------- */}
+            {/* 編集モード */}
             {isEditing ? (
               <div className="space-y-3">
-
-                {/* 名前 */}
                 <div>
                   <label className="font-bold">名前：</label>
                   <input
@@ -121,7 +120,6 @@ const TodoList = (props: Props) => {
                   />
                 </div>
 
-                {/* 科目 */}
                 <div>
                   <label className="font-bold">科目：</label>
                   <select
@@ -129,33 +127,18 @@ const TodoList = (props: Props) => {
                     onChange={(e) => setEditSubject(e.target.value)}
                     className="ml-2 rounded-md border p-1"
                   >
-                    <option value="国語3">国語3</option>
-                    <option value="社会3">社会3</option>
-                    <option value="解析1">解析1</option>
-                    <option value="解析2">解析2</option>
-                    <option value="線形代数・微分方程式">線形代数・微分方程式</option>
-                    <option value="基礎物理3">基礎物理3</option>
-                    <option value="保健・体育3">保健・体育3</option>
-                    <option value="英語5">英語5</option>
-                    <option value="英語表現3">英語表現3</option>
-                    <option value="情報3">情報3</option>
-                    <option value="プログラミング2">プログラミング2</option>
-                    <option value="プログラミング3">プログラミング3</option>
-                    <option value="アルゴリズムとデータ構造1">アルゴリズムとデータ構造1</option>
-                    <option value="論理回路2">論理回路2</option>
-                    <option value="電気電子回路1">電気電子回路1</option>
-                    <option value="知識科学概論">知識科学概論</option>
-                    <option value="知能情報実験実習1">知能情報実験実習1</option>
-                    <option value="応用専門概論">応用専門概論</option>
-                    <option value="応用専門PBL1">応用専門PBL1</option>
-                    <option value="その他">その他</option>
+                    {Object.keys(SUBJECT_COLORS).map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                {/* 優先度 */}
+                {/* 優先度（1〜5） */}
                 <div>
                   <label className="font-bold mr-2">優先度：</label>
-                  {[1, 2, 3].map((v) => (
+                  {[1, 2, 3, 4, 5].map((v) => (
                     <label key={v} className="mr-2">
                       <input
                         type="radio"
@@ -168,7 +151,6 @@ const TodoList = (props: Props) => {
                   ))}
                 </div>
 
-                {/* 期限 */}
                 <div>
                   <label className="font-bold">期限：</label>
                   <input
@@ -187,7 +169,17 @@ const TodoList = (props: Props) => {
                   />
                 </div>
 
-                {/* 保存 / キャンセル */}
+                <div>
+                  <label className="font-bold">メモ：</label>
+                  <textarea
+                    value={editMemo}
+                    onChange={(e) => setEditMemo(e.target.value)}
+                    className="ml-2 w-full rounded-md border p-1"
+                    rows={3}
+                    placeholder="メモを入力（任意）"
+                  />
+                </div>
+
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => {
@@ -197,6 +189,7 @@ const TodoList = (props: Props) => {
                         subject: editSubject,
                         priority: editPriority,
                         deadline: editDeadline,
+                        memo: editMemo,
                       });
                       setEditingId(null);
                     }}
@@ -214,10 +207,8 @@ const TodoList = (props: Props) => {
                 </div>
               </div>
             ) : (
-              /* ----------------------------------------------------
-                 通常表示モード
-              ---------------------------------------------------- */
               <>
+                {/* 通常表示モード */}
                 <div className="flex flex-row items-baseline text-slate-700">
                   <FontAwesomeIcon
                     icon={faFile}
@@ -234,6 +225,7 @@ const TodoList = (props: Props) => {
                     className="mr-1.5 cursor-pointer"
                   />
 
+                  {/* タイトル + 残り時間バッジ */}
                   <div
                     className={twMerge(
                       "text-lg font-bold",
@@ -242,6 +234,8 @@ const TodoList = (props: Props) => {
                   >
                     {todo.name}
                   </div>
+
+                  {renderDeadlineBadge(todo.deadline)}
 
                   <div className="ml-4 text-sm text-blue-600 font-bold">
                     科目：{todo.subject}
@@ -252,7 +246,6 @@ const TodoList = (props: Props) => {
                     {num2star(todo.priority)}
                   </div>
 
-                  {/* 編集ボタン */}
                   <button
                     onClick={() => {
                       setEditingId(todo.id);
@@ -260,6 +253,7 @@ const TodoList = (props: Props) => {
                       setEditSubject(todo.subject);
                       setEditPriority(todo.priority);
                       setEditDeadline(todo.deadline);
+                      setEditMemo(todo.memo ?? "");
                     }}
                     className="ml-auto rounded-md bg-blue-400 px-2 py-1 text-sm text-white hover:bg-blue-500"
                   >
@@ -274,6 +268,7 @@ const TodoList = (props: Props) => {
                   </button>
                 </div>
 
+                {/* 期限表示 */}
                 {todo.deadline && (
                   <div className="ml-4 flex items-center text-sm">
                     <FontAwesomeIcon
@@ -288,6 +283,18 @@ const TodoList = (props: Props) => {
                       )}
                     >
                       期限: {dayjs(todo.deadline).format("YYYY年M月D日 H時m分")}
+                    </div>
+                  </div>
+                )}
+
+                {/* メモ表示 */}
+                {todo.memo && (
+                  <div className="mt-2">
+                    <div className="flex">
+                      <div className="font-bold mr-2">メモ：</div>
+                      <div className="text-sm text-slate-600 whitespace-pre-line break-word">
+                        {todo.memo}
+                      </div>
                     </div>
                   </div>
                 )}

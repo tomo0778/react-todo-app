@@ -9,7 +9,6 @@ type Props = {
 };
 
 const WelcomeMessage = ({
-  name,
   uncompletedCount,
   totalCount,
   todayCount,
@@ -18,7 +17,7 @@ const WelcomeMessage = ({
   return (
     <div className="rounded-md border border-slate-300 bg-white p-3 shadow-sm">
       <div className="text-xl font-bold mb-1">
-        {name} さん、こんにちは！
+        こんにちは！
       </div>
 
       <div className="text-slate-700 space-y-1">

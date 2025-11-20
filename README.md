@@ -1,4 +1,6 @@
 #  3I の為の Todo アプリ
+https://github.com/tomo0778/react-todo-app
+
 ### ― 3Iの「課題管理」を効率化するための Todo アプリ ―
 
 React / TypeScript / Tailwind CSS を使用し、  
